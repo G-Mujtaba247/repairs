@@ -16,6 +16,10 @@ const contactSchema = new mongoose.Schema({
     map: {
         type: String,
         required: false,
+    },
+    faqs: {
+        type: Array,
+        required: false,
     }
 }, { timestamps: true });
 

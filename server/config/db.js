@@ -9,7 +9,7 @@ export const dbConnect = async () => {
     mongoose.connection.on("error", (error) => {
         console.log("Failed to connect: ", error);
     });
-    
-    await mongoose.connect(process.env.MONGODB_URL_PROD);
+
+    await mongoose.connect(process.env.MONGODB_URL_LOCAL);
 
 }

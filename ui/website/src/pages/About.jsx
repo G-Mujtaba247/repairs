@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import WebLayout from '../layouts/WebLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -11,31 +11,28 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-import { CheckCircle2, Users, Trophy, Target, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Users, Trophy, Target, ArrowRight, Scale, ShieldCheck } from 'lucide-react'
+import axios from 'axios'
+import { toast } from 'sonner';
+import { ABOUTUS_DETAIL } from '../resources/server_apis'
 
 const About = () => {
-    const features = [
-        {
-            icon: <Target className="h-10 w-10 text-primary" />,
-            title: "Expert Diagnostics",
-            description: "We quickly identify issues with advanced diagnostic tools to save you time and money."
-        },
-        {
-            icon: <Users className="h-10 w-10 text-primary" />,
-            title: "Certified Technicians",
-            description: "Our team is factory trained and certified to repair all major appliance brands."
-        },
-        {
-            icon: <Trophy className="h-10 w-10 text-primary" />,
-            title: "Fast Service",
-            description: "Same-day and next-day service appointments available to get you back on track."
-        },
-        {
-            icon: <CheckCircle2 className="h-10 w-10 text-primary" />,
-            title: "90-Day Warranty",
-            description: "We stand by our repairs with a comprehensive 90-day warranty on parts and labor."
+    const [aboutus, setAboutus] = useState()
+    const [features, setFeatures] = useState([])
+    useEffect(() => {
+        const fetchAboutus = async () => {
+            const response = await axios.get(ABOUTUS_DETAIL);
+            if (response.data.status == true){
+                setAboutus(response.data.aboutUs[0])
+                setFeatures(response.data.aboutUs[0]?.features)
+                console.log(response.data.aboutUs[0])
+            } else {
+                toast.error("Inertnal server error")
+                return;
+            }
         }
-    ]
+        fetchAboutus();
+    }, [])
 
     const team = [
         {
@@ -99,14 +96,13 @@ const About = () => {
                     {/* Our Story / Intro */}
                     <section className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
-                            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                                Dedicated to Keeping Your Home Running.
-                            </h2>
-                            <p className="text-lg text-muted-foreground leading-relaxed">
-                                Founded in 2020, we started with a simple toolbox and a commitment to helping neighbors fix their broken appliances. Today, we have grown into a premier repair service, trusted by thousands of homeowners to keep their households running smoothly.
+                            <p className="text-muted-foreground leading-relaxed">
+                                <Target className="h-10 w-10 text-primary" />
+                                {aboutus?.mission}
                             </p>
-                            <p className="text-lg text-muted-foreground leading-relaxed">
-                                From malfunctioning refrigerators to noisy washing machines, we understand the inconvenience of a broken appliance. Our goal is to provide hassle-free, transparent, and effective repair solutions so you can get back to what matters most.
+                            <p className="text-muted-foreground leading-relaxed">
+                                <Scale className="h-10 w-10 text-primary" />
+                                {aboutus?.vision}
                             </p>
                         </div>
                         <div className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
@@ -134,15 +130,15 @@ const About = () => {
                                 <Card key={index} className="border-none shadow-lg bg-card hover:shadow-xl transition-shadow duration-300">
                                     <CardHeader>
                                         <div className="mb-4 inline-block rounded-lg bg-primary/10 p-3">
-                                            {feature.icon}
+                                            <ShieldCheck className="h-10 w-10 text-primary" />
                                         </div>
-                                        <CardTitle className="text-xl">{feature.title}</CardTitle>
+                                        <CardTitle className="text-xl">{feature.text}</CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    {/* <CardContent>
                                         <CardDescription className="text-base">
                                             {feature.description}
                                         </CardDescription>
-                                    </CardContent>
+                                    </CardContent> */}
                                 </Card>
                             ))}
                         </div>

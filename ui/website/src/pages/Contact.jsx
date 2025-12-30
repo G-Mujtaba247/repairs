@@ -23,12 +23,14 @@ import { CONTACTUS_DETAIL } from '../resources/server_apis'
 
 const Contact = () => {
     const [contactUs, setContactUs] = useState({});
+    const [faqs, setFAQS] = useState([]);
     useEffect(() => {
         const fetchContactDetails = async () => {
             const response = await axios.get(CONTACTUS_DETAIL);
             if (response.data.status == true) {
                 console.log(response.data.contactUs[0]);
                 setContactUs(response.data.contactUs[0]);
+                response.data.contactUs[0].faqs && setFAQS(response.data.contactUs[0].faqs);
             } else {
                 setContactUs({});
                 console.error("Failed to fetch contact us details");
@@ -36,25 +38,6 @@ const Contact = () => {
         }
         fetchContactDetails();
     }, []);
-
-    const faqs = [
-        {
-            question: "What appliances do you repair?",
-            answer: "We repair all major household appliances including refrigerators, washing machines, dryers, ovens, dishwashers, and more."
-        },
-        {
-            question: "Do you offer same-day service?",
-            answer: "Yes, we offer same-day and next-day appointments for urgent repair needs. Please call us early in the day to secure a slot."
-        },
-        {
-            question: "Is there a warranty on repairs?",
-            answer: "Absolutely. We provide a 90-day warranty on all parts and labor for your peace of mind. If the same issue persists, we'll fix it for free."
-        },
-        {
-            question: "Do you service my brand?",
-            answer: "We service all major brands including Samsung, LG, Whirlpool, GE, Maytag, KitchenAid, and many others."
-        }
-    ]
 
     return (
         <WebLayout>

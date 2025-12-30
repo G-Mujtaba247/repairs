@@ -12,13 +12,13 @@ export const contactUsDetail = async (req, res) => { // show contact us form det
 }
 export const contactUs = async (req, res) => { // add || update
     const { id } = req.params;
-    const { phone, email, address, map } = req.body;
+    const { phone, email, address, map, faqs } = req.body;
 
     try {
         if (id) {
             const existingContactUs = await ContactUs.findById({ _id: id});
             if (existingContactUs) {
-                const updatedContactUs = await ContactUs.findByIdAndUpdate( { _id: id }, { phone, email, address, map }, { new: true } );
+                const updatedContactUs = await ContactUs.findByIdAndUpdate( { _id: id }, { phone, email, address, map, faqs }, { new: true } );
                 if (updatedContactUs) {
                     return res.send({status: true, message: "Contact Us updated successfully", updatedContactUs});
                 } else {
@@ -37,7 +37,8 @@ export const contactUs = async (req, res) => { // add || update
             phone,
             email,
             address,
-            map
+            map,
+            faqs
         });
 
         if (newContactUs) {

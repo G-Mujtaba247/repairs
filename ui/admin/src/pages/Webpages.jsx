@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Info, Phone, ArrowRight, Plus, Pencil, Trash2, FileText, Globe } from 'lucide-react';
+import { Home, Info, Phone, ArrowRight, Plus, Pencil, Trash2, FileText, Globe, CloudCog } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LIST_WEBPAGES, CREATE_WEBPAGE, DELETE_WEBPAGE, UPDATE_WEBPAGE } from '@/resources/server_apis';
 import axios from 'axios';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function Webpages() {
 
@@ -34,7 +35,7 @@ export default function Webpages() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [status, setStatus] = useState(false);
     const [editorContent, setEditorContent] = useState('');
-    const { register, handleSubmit, reset, resetField } = useForm();
+    const { register, handleSubmit, reset } = useForm();
 
     const pages = [
         {
@@ -89,9 +90,11 @@ export default function Webpages() {
             if (data?._id) {
                 const response = await axios.patch(`${UPDATE_WEBPAGE}/${data._id}`, myPage);
                 response.data.status == true ? getWebpages() : console.log("Axios error")
+                toast.info(response.data.message)
             } else {
                 const response = await axios.post(CREATE_WEBPAGE, myPage);
                 response.data.status == true ? getWebpages() : console.log("Axios error")
+                toast.success(response.data.message)
             }
 
         } catch (error) {
@@ -105,6 +108,7 @@ export default function Webpages() {
             try {
                 const response = await axios.delete(`${DELETE_WEBPAGE}/${id}`);
                 response.data.status == true ? getWebpages() : console.log("Axios error")
+                toast.success(response.data.message)
             } catch (error) {
                 console.log("Error: ", error)
             }
@@ -123,15 +127,14 @@ export default function Webpages() {
     };
 
     const openAdd = () => {
-        resetField();
-        reset();
+        setIsDialogOpen(true);
+        reset({title: "", slug: ""});
         setEditorContent("");
         setStatus(false);
-        setIsDialogOpen(true);
     };
     
     const closeModal = () => {
-        resetField();
+        reset();
         setEditorContent("");
         setStatus(false);
         setIsDialogOpen(false);
@@ -146,8 +149,8 @@ export default function Webpages() {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {pages.map((page) => (
-                        <Card key={page.path} className="hover:shadow-lg transition-shadow">
+                    {pages.map((page, i) => (
+                        <Card key={i} className="hover:shadow-lg transition-shadow">
                             <CardHeader>
                                 <div className="flex items-center gap-4">
                                     <div className={`p-2 rounded-lg bg-muted ${page.color}`}>

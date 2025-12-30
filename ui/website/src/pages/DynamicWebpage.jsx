@@ -22,7 +22,6 @@ const DynamicWebpage = () => {
                 const response = await axios.get(`${DETAIL_WEBPAGE}/${slug}`);
 
                 if (response.data.status == true) {
-                    console.log("Fetched page data:", response.data.webpage);
                     setPage(response.data.webpage);
                     // Dynamically set document title if available
                     if (response.data.webpage.title) {
