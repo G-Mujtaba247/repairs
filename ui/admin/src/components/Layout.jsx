@@ -7,7 +7,8 @@ import {
     Info,
     Phone,
     Settings,
-    Menu
+    Menu,
+    CalendarCheck
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -18,6 +19,7 @@ const navItems = [
     { name: 'Webpages', path: '/webpages', icon: LayoutTemplate },
     { name: 'Home', path: '/home', icon: Home },
     { name: 'About', path: '/about', icon: Info },
+    { name: 'Booking', path: '/booking', icon: CalendarCheck },
     { name: 'Contact', path: '/contact', icon: Phone },
     { name: 'Settings', path: '/settings', icon: Settings },
 ];

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { dbConnect } from './config/db.js';
@@ -5,13 +6,14 @@ import webpageRouter from './routes/webpageRoutes.js';
 import contactUsRouter from './routes/contactUsRoutes.js';
 import aboutUsRouter from './routes/aboutUsRoutes.js';
 import settingsRouter from './routes/settingsRoutes.js';
+import bookingRouter from './routes/bookingRoutes.js';
 
 const app = express();
 
 app.use(express.json());
 
-app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb' }));
 
 app.use(cors());
 
@@ -20,12 +22,13 @@ const PREFIX = '/api/v1';
 
 app.use(PREFIX, webpageRouter);
 app.use(PREFIX, contactUsRouter);
+app.use(PREFIX, bookingRouter);
 app.use(PREFIX, aboutUsRouter);
 app.use(PREFIX, settingsRouter);
 
 // Hello world
 app.get('/test-server', async (req, res) => {
-    return res.send({status: true, message: "Server is running"})
+    return res.send({ status: true, message: "Server is running" })
 })
 
 dbConnect().then(() => {

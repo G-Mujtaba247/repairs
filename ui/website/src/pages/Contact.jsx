@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import WebLayout from '../layouts/WebLayout'
-import { Mail, Phone, MapPin, Send } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, CheckCircle2Icon } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -18,12 +18,34 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
 import axios from 'axios'
-import { CONTACTUS_DETAIL } from '../resources/server_apis'
+
+import { BOOKING_CREATE, CONTACTUS_DETAIL } from '../resources/server_apis'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 const Contact = () => {
     const [contactUs, setContactUs] = useState({});
     const [faqs, setFAQS] = useState([]);
+    const { register, handleSubmit, reset } = useForm();
+    const [ emailMessage, setEmailMessage ] = useState('')
+    const [category, setCategory] = useState('');
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         const fetchContactDetails = async () => {
             const response = await axios.get(CONTACTUS_DETAIL);
@@ -38,6 +60,42 @@ const Contact = () => {
         }
         fetchContactDetails();
     }, []);
+
+    const handleSubmitBooking = async (data) => {
+        if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.message || !category) {
+            toast.error("Please fill all the fields");
+            return;
+        }
+
+        try {
+            setLoading(true)
+            const bookingDetails = {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phone: data.phone,
+                issue: data.applianceIssue,
+                message: data.message,
+                category: category
+            }
+
+            const response = await axios.post(BOOKING_CREATE, bookingDetails)
+            if (response.data.status == true) {
+                toast.success(response.data.message);
+                setEmailMessage(response.data?.message);
+                reset();
+                setCategory('');
+                setLoading(false)
+            } else {
+                toast.error(response.data.message);
+                setLoading(false)
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Network error");
+            setLoading(false)
+        }
+    }
 
     return (
         <WebLayout>
@@ -111,44 +169,71 @@ const Contact = () => {
                         {/* Contact Form */}
                         <Card className="shadow-lg border-muted/40">
                             <CardHeader>
+                                { emailMessage &&
+                                <Alert>
+                                    <CheckCircle2Icon />
+                                    <AlertTitle>Booking has been submitted successfully</AlertTitle>
+                                    <AlertDescription>
+                                    {emailMessage}
+                                    </AlertDescription>
+                                </Alert>
+                                }
                                 <CardTitle className="text-2xl">Request a Service</CardTitle>
                                 <CardDescription>
                                     Fill out the form below and we'll get back to you to confirm your appointment.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <form className="space-y-6">
+                                <form onSubmit={handleSubmit(handleSubmitBooking)} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="firstName">First name</Label>
-                                            <Input id="firstName" placeholder="John" />
+                                            <Input {...register('firstName')} id="firstName" placeholder="John" />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="lastName">Last name</Label>
-                                            <Input id="lastName" placeholder="Doe" />
+                                            <Input {...register('lastName')} id="lastName" placeholder="Doe" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
-                                        <Input id="email" type="email" placeholder="john@example.com" />
+                                        <Input {...register('email')} id="email" type="email" placeholder="john@example.com" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">Phone no#</Label>
-                                        <Input id="phone" type="text" placeholder="+(513) 783 346" />
+                                        <Input {...register('phone')} id="phone" type="text" placeholder="+(513) 783 346" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="subject">Appliance Issue</Label>
-                                        <Input id="subject" placeholder="e.g., Washing machine not draining" />
+                                        <Label htmlFor="phone">Appliance category</Label>
+                                        <Select onValueChange={(e) => setCategory(e)} value={category}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select a category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Categories</SelectLabel>
+                                                    <SelectItem value="ac">AC</SelectItem>
+                                                    <SelectItem value="dryer">Dryer</SelectItem>
+                                                    <SelectItem value="refrigerator">Refrigerator</SelectItem>
+                                                    <SelectItem value="microwave">Microwave</SelectItem>
+                                                    <SelectItem value="oven">Oven</SelectItem>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="subject">Appliance issue</Label>
+                                        <Input {...register('applianceIssue')} id="subject" placeholder="e.g., Washing machine not draining" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="message">Message</Label>
                                         <Textarea
-                                            id="message"
+                                            {...register('message')}
                                             placeholder="Describe the problem in detail..."
                                             className="min-h-[150px]"
                                         />
                                     </div>
-                                    <Button type="submit" className="w-full md:w-auto">
+                                    <Button type="submit" className="w-full md:w-auto" disabled={loading}>
                                         <Send className="mr-2 h-4 w-4" /> Book Appointment
                                     </Button>
                                 </form>
@@ -189,19 +274,19 @@ const Contact = () => {
                                     Visit our office in the heart of Lahore.
                                 </p>
                             </div>
-                            { contactUs.map &&
-                            <div className="h-[400px] w-full rounded-xl overflow-hidden shadow-lg border border-muted">
-                                <iframe
-                                    src={contactUs.map}
-                                    width="100%"
-                                    height="100%"
-                                    style={{ border: 0 }}
-                                    allowFullScreen=""
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    title="Lahore Map"
-                                ></iframe>
-                            </div> }
+                            {contactUs.map &&
+                                <div className="h-[400px] w-full rounded-xl overflow-hidden shadow-lg border border-muted">
+                                    <iframe
+                                        src={contactUs.map}
+                                        width="100%"
+                                        height="100%"
+                                        style={{ border: 0 }}
+                                        allowFullScreen=""
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        title="Lahore Map"
+                                    ></iframe>
+                                </div>}
                         </div>
                     </div>
                 </div>

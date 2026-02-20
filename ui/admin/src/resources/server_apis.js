@@ -12,6 +12,12 @@ export const ABOUTUS_DETAIL = BASE_URL + '/aboutus-details';
 export const CREATE_ABOUTUS = BASE_URL + '/aboutus/create';
 export const UPDATE_ABOUTUS = BASE_URL + '/aboutus/update';
 
+// booking apis
+export const ALL_BOOKINGS   = BASE_URL + '/bookings';
+export const CREATE_BOOKING = BASE_URL + '/bookings/create';
+export const UPDATE_BOOKING = BASE_URL + '/bookings/update';
+export const DELETE_BOOKING = BASE_URL + '/bookings/delete';
+
 // contact us apis
 export const CONTACTUS_DETAIL = BASE_URL + '/contactus';
 export const CREATE_CONTACTUS = BASE_URL + '/contactus/create';
