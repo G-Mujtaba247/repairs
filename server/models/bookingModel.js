@@ -3,10 +3,11 @@ import mongoose from "mongoose";
 const bookingStatus = {
     pending: "pending",
     confirmed: "confirmed",
+    dispatched: "dispatched",
     processing: "processing",
     completed: "completed",
     cancelled: "cancelled"
-}
+};
 
 const bookingSchema = new mongoose.Schema({
     firstName: {
@@ -23,7 +24,7 @@ const bookingSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: false,
+        required: true,
     },
     issue: {
         type: String,
@@ -37,10 +38,44 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    serviceType: {
+        type: String,
+        enum: ["electronics", "vehicles"],
+        required: false,
+    },
+    itemName: {
+        type: String,
+        required: false,
+    },
+    repairerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Repairer",
+        required: false,
+    },
+    locationName: {
+        type: String,
+        required: false,
+    },
+    latitude: {
+        type: Number,
+        required: false,
+    },
+    longitude: {
+        type: Number,
+        required: false,
+    },
+    repairDate: {
+        type: String,
+        required: false,
+    },
+    repairTime: {
+        type: String,
+        required: false,
+    },
     status: {
         type: String,
         enum: Object.values(bookingStatus),
-        defaultValue: bookingStatus.pending
+        default: "pending"
     }
 }, { timestamps: true });
 

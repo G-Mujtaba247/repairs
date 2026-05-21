@@ -25,7 +25,7 @@ export const createBooking = async (req, res) => {
 
 export const allBooking = async (req, res) => {
     try {
-        const bookings = await Booking.find({}).sort({ createdAt: -1 });
+        const bookings = await Booking.find({}).populate("repairerId").sort({ createdAt: -1 });
         if (bookings.length > 0) {
             return res.send({status: true, bookings})
         } else {
