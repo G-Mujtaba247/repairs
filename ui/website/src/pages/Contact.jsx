@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import WebLayout from '../layouts/WebLayout'
-import { Mail, Phone, MapPin, Send, CheckCircle2Icon } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, CheckCircle2Icon, AlertCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -37,45 +37,80 @@ import axios from 'axios'
 import { BOOKING_CREATE, CONTACTUS_DETAIL } from '../resources/server_apis'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { validateEmail, validatePhone } from '../lib/validations'
 
 const Contact = () => {
     const [contactUs, setContactUs] = useState({});
     const [faqs, setFAQS] = useState([]);
-    const { register, handleSubmit, reset } = useForm();
+    const { register, handleSubmit, reset, formState: { errors } } = useForm();
     const [ emailMessage, setEmailMessage ] = useState('')
     const [category, setCategory] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchContactDetails = async () => {
-            const response = await axios.get(CONTACTUS_DETAIL);
-            if (response.data.status == true) {
-                console.log(response.data.contactUs[0]);
-                setContactUs(response.data.contactUs[0]);
-                response.data.contactUs[0].faqs && setFAQS(response.data.contactUs[0].faqs);
-            } else {
-                setContactUs({});
-                console.error("Failed to fetch contact us details");
+            try {
+                const response = await axios.get(CONTACTUS_DETAIL);
+                if (response.data.status == true) {
+                    console.log(response.data.contactUs[0]);
+                    setContactUs(response.data.contactUs[0]);
+                    response.data.contactUs[0].faqs && setFAQS(response.data.contactUs[0].faqs);
+                } else {
+                    setContactUs({});
+                    console.error("Failed to fetch contact us details");
+                }
+            } catch (error) {
+                console.error("Error fetching contact:", error);
+                toast.error("Failed to load contact information");
             }
         }
         fetchContactDetails();
     }, []);
 
     const handleSubmitBooking = async (data) => {
-        if (!data.firstName || !data.lastName || !data.email || !data.phone || !data.message || !category) {
-            toast.error("Please fill all the fields");
+        // Validation
+        if (!data.firstName?.trim()) {
+            toast.error("First name is required");
+            return;
+        }
+        if (!data.lastName?.trim()) {
+            toast.error("Last name is required");
+            return;
+        }
+        if (!data.email?.trim()) {
+            toast.error("Email is required");
+            return;
+        }
+        if (!validateEmail(data.email)) {
+            toast.error("Please enter a valid email address");
+            return;
+        }
+        if (!data.phone?.trim()) {
+            toast.error("Phone number is required");
+            return;
+        }
+        if (!validatePhone(data.phone)) {
+            toast.error("Please enter a valid phone number");
+            return;
+        }
+        if (!data.message?.trim()) {
+            toast.error("Please describe your issue");
+            return;
+        }
+        if (!category) {
+            toast.error("Please select an appliance category");
             return;
         }
 
         try {
             setLoading(true)
             const bookingDetails = {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                email: data.email,
-                phone: data.phone,
-                issue: data.applianceIssue,
-                message: data.message,
+                firstName: data.firstName.trim(),
+                lastName: data.lastName.trim(),
+                email: data.email.trim(),
+                phone: data.phone.trim(),
+                issue: data.applianceIssue?.trim() || '',
+                message: data.message.trim(),
                 category: category
             }
 
@@ -92,7 +127,8 @@ const Contact = () => {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Network error");
+            const errorMessage = error.response?.data?.message || "Network error";
+            toast.error(errorMessage);
             setLoading(false)
         }
     }

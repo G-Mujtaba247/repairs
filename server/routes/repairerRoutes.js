@@ -6,6 +6,7 @@ import {
     deleteRepairer,
     seedRepairers
 } from "../controllers/repairerController.js";
+import { validateRepairer } from "../middleware/validation.js";
 
 const repairerRouter = express.Router();
 
@@ -15,8 +16,8 @@ repairerRouter.post("/website/repairers/seed", seedRepairers);
 
 // Admin routes
 repairerRouter.get("/repairers", allRepairers);
-repairerRouter.post("/repairers/create", createRepairer);
-repairerRouter.patch("/repairers/update", updateRepairer);
+repairerRouter.post("/repairers/create", validateRepairer, createRepairer);
+repairerRouter.patch("/repairers/update", validateRepairer, updateRepairer);
 repairerRouter.delete("/repairers/delete/:repairerId", deleteRepairer);
 
 export default repairerRouter;

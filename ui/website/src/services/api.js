@@ -1,23 +1,27 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const PREFIX = "/api/v1";
-const BASE_URL = import.meta.env.VITE_SERVER_BASE_PATH || "http://localhost:5000";
+const BASE_URL = import.meta.env.SERVER_BASE_PATH || "http://localhost:5000";
 const API_BASE = BASE_URL + PREFIX;
 
 // Create axios instance with default config
-const adminApiClient = axios.create({
+const apiClient = axios.create({
     baseURL: API_BASE,
     timeout: 10000,
 });
 
 // Response interceptor for standardized error handling
-adminApiClient.interceptors.response.use(
+apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         const message = error.response?.data?.message || error.message || 'An error occurred';
         const code = error.response?.data?.code || 'UNKNOWN_ERROR';
         
-        console.error(`API Error [${code}]:`, message);
+        // Don't toast errors for specific codes that are already handled
+        if (code !== 'VALIDATION_ERROR' && !error.config.url.includes('seed')) {
+            console.error(`API Error [${code}]:`, message);
+        }
         
         return Promise.reject({
             message,
@@ -29,40 +33,26 @@ adminApiClient.interceptors.response.use(
 );
 
 // Webpage APIs
-export const LIST_WEBPAGES = `${API_BASE}/webpages`;
-export const CREATE_WEBPAGE = `${API_BASE}/webpages/create`;
-export const UPDATE_WEBPAGE = `${API_BASE}/webpages/update`;
-export const DELETE_WEBPAGE = `${API_BASE}/webpages/delete`;
+export const LIST_WEBPAGES = `${API_BASE}/website/webpages`;
+export const DETAIL_WEBPAGE = `${API_BASE}/website/webpages`;
 
-// About Us APIs
-export const ABOUTUS_DETAIL = `${API_BASE}/aboutus`;
-export const CREATE_ABOUTUS = `${API_BASE}/aboutus/create`;
-export const UPDATE_ABOUTUS = `${API_BASE}/aboutus/update`;
+// About us APIs
+export const ABOUTUS_DETAIL = `${API_BASE}/website/aboutus`;
+
+// Contact us APIs
+export const CONTACTUS_DETAIL = `${API_BASE}/website/contactus`;
 
 // Booking APIs
-export const ALL_BOOKINGS = `${API_BASE}/bookings`;
-export const CREATE_BOOKING = `${API_BASE}/bookings/create`;
-export const UPDATE_BOOKING = `${API_BASE}/bookings/update`;
-export const DELETE_BOOKING = `${API_BASE}/bookings/delete`;
+export const BOOKING_CREATE = `${API_BASE}/website/bookings/create`;
 
-// Contact Us APIs
-export const CONTACTUS_DETAIL = `${API_BASE}/contactus`;
-export const CREATE_CONTACTUS = `${API_BASE}/contactus/create`;
-export const UPDATE_CONTACTUS = `${API_BASE}/contactus/update`;
+// Repairer APIs
+export const LIST_REPAIRERS = `${API_BASE}/website/repairers`;
+export const SEED_REPAIRERS = `${API_BASE}/website/repairers/seed`;
 
-// Repairers APIs
-export const LIST_REPAIRERS = `${API_BASE}/repairers`;
-export const CREATE_REPAIRER = `${API_BASE}/repairers/create`;
-export const UPDATE_REPAIRER = `${API_BASE}/repairers/update`;
-export const DELETE_REPAIRER = `${API_BASE}/repairers/delete`;
-
-// Settings APIs
-export const SETTINGS_DETAIL = `${API_BASE}/settings`;
-
-// Helper functions
+// Helper function for API calls
 export const fetchData = async (url, options = {}) => {
     try {
-        const response = await adminApiClient.get(url, options);
+        const response = await apiClient.get(url, options);
         return {
             status: true,
             data: response.data.data || response.data,
@@ -78,9 +68,10 @@ export const fetchData = async (url, options = {}) => {
     }
 };
 
+// Helper function for POST requests
 export const postData = async (url, payload, options = {}) => {
     try {
-        const response = await adminApiClient.post(url, payload, options);
+        const response = await apiClient.post(url, payload, options);
         return {
             status: true,
             data: response.data.data || response.data,
@@ -96,9 +87,10 @@ export const postData = async (url, payload, options = {}) => {
     }
 };
 
+// Helper function for PATCH requests
 export const updateData = async (url, payload, options = {}) => {
     try {
-        const response = await adminApiClient.patch(url, payload, options);
+        const response = await apiClient.patch(url, payload, options);
         return {
             status: true,
             data: response.data.data || response.data,
@@ -114,9 +106,10 @@ export const updateData = async (url, payload, options = {}) => {
     }
 };
 
+// Helper function for DELETE requests
 export const deleteData = async (url, options = {}) => {
     try {
-        const response = await adminApiClient.delete(url, options);
+        const response = await apiClient.delete(url, options);
         return {
             status: true,
             data: response.data.data || response.data,
@@ -132,5 +125,4 @@ export const deleteData = async (url, options = {}) => {
     }
 };
 
-export default adminApiClient;
-
+export default apiClient;
