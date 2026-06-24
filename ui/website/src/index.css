@@ -96,6 +96,36 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  /* 8px grid and micro-utilities */
+  :root {
+    --grid: 8px;
+    --space-1: 0.5rem; /* 8px */
+    --space-2: 1rem;   /* 16px */
+    --space-3: 1.5rem; /* 24px */
+    --space-4: 2rem;   /* 32px */
+    --space-5: 3rem;   /* 48px */
+  }
+
+  .glass {
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+  }
+
+  .elevated { box-shadow: 0 8px 30px rgba(2,6,23,0.08); }
+  .smooth-transition { transition: all 180ms cubic-bezier(0.4,0,0.2,1); }
+
+  /* skeleton animation */
+  .skeleton { position: relative; overflow: hidden; }
+  .skeleton::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.2s infinite;
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
 }
 
 @layer base {

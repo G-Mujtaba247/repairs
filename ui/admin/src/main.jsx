@@ -4,10 +4,13 @@ import './index.css'
 import 'react-quill-new/dist/quill.snow.css';
 import App from './App.jsx'
 import { Toaster } from './components/ui/sonner';
+import { ThemeProvider } from './context/ThemeProvider';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Toaster position="top-center" duration={3000} richColors />
-    <App />
+    <ThemeProvider>
+      <Toaster position="top-center" duration={3000} richColors />
+      <App />
+    </ThemeProvider>
   </StrictMode>,
 )

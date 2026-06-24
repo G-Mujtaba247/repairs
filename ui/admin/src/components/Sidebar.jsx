@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemeToggle from './ui/ThemeToggle'
 
 const Sidebar = ({ activeItem, onItemClick }) => {
   const menuItems = [
@@ -39,6 +40,9 @@ const Sidebar = ({ activeItem, onItemClick }) => {
 
       {/* Footer */}
       <div className="p-6 border-t border-gray-700 text-xs text-gray-400">
+        <div className="mb-3">
+          <ThemeToggle />
+        </div>
         <p>Repairs CMS v1.0</p>
         <button className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm">
           Logout

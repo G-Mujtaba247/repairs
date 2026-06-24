@@ -9,6 +9,13 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+      },
+      colors: {
+        sky: {
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1'
+        }
       }
     },
   },

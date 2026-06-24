@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
 import { NavLink } from 'react-router'
+import ThemeToggle from './ui/ThemeToggle'
 
 const Navbar = () => {
     return (
-        <div className="fixed top-6 left-0 right-0 z-50 flex justify-center w-full">
-            <NavigationMenu className="rounded-full border border-border/40 bg-background/60 backdrop-blur-xl shadow-sm">
-                <NavigationMenuList className="px-2 py-1">
+        <div className="fixed top-6 left-0 right-0 z-50 flex items-center justify-center w-full">
+                <NavigationMenu className="rounded-full border border-border/40 bg-background/60 backdrop-blur-xl shadow-sm">
+                    <NavigationMenuList className="px-2 py-1">
                     <NavigationMenuItem>
                         <NavLink
                             to="/"
@@ -40,6 +41,9 @@ const Navbar = () => {
                     </NavigationMenuItem>
                 </NavigationMenuList>
             </NavigationMenu>
+            <div className="absolute right-6">
+                <ThemeToggle />
+            </div>
         </div>
     )
 }
