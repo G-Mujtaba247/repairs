@@ -10,73 +10,15 @@ const bookingStatus = {
 };
 
 const bookingSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        required: true,
-    },
-    lastName: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-        required: true,
-    },
-    phone: {
-        type: String,
-        required: true,
-    },
-    issue: {
-        type: String,
-        required: false,
-    },
-    message: {
-        type: String,
-        required: false,
-    },
-    category: {
-        type: String, // Keep for backward compatibility or general category
-        required: false,
-    },
-    serviceType: {
-        type: String, // "electronics" or "vehicles"
-        enum: ["electronics", "vehicles"],
-        required: false,
-    },
-    itemName: {
-        type: String, // e.g. "Refrigerator", "AC", "Car", "Bike"
-        required: false,
-    },
-    repairerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Repairer",
-        required: false,
-    },
-    locationName: {
-        type: String, // Customer address/location
-        required: false,
-    },
-    latitude: {
-        type: Number,
-        required: false,
-    },
-    longitude: {
-        type: Number,
-        required: false,
-    },
-    repairDate: {
-        type: String,
-        required: false,
-    },
-    repairTime: {
-        type: String,
-        required: false,
-    },
-    status: {
-        type: String,
-        enum: Object.values(bookingStatus),
-        default: "pending"
-    }
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    technicianId: { type: mongoose.Schema.Types.ObjectId, ref: 'TechnicianProfile', required: true },
+    deviceCategory: { type: String, required: true },
+    serviceRequested: { type: String, required: true },
+    issueDescription: { type: String },
+    scheduledDate: { type: String, required: true },
+    scheduledTime: { type: String, required: true },
+    status: { type: String, enum: Object.values(bookingStatus), default: bookingStatus.pending },
+    price: { type: Number, required: false },
 }, { timestamps: true });
 
 const Booking = mongoose.model("Booking", bookingSchema);
