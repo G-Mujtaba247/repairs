@@ -198,6 +198,12 @@ A comprehensive modern, clean, and user-friendly frontend redesign for the Repai
 
 ### Admin Panel
 ✅ **Dashboard Overview** - Key metrics at a glance
+
+## Marketplace additions
+
+- Technicians can register, create a profile listing services, pricing, availability, and be verified by admins.
+- Customers can search technicians by device category, service, rating, and availability, then book specific technician slots.
+- Admins can review and verify technician profiles and monitor marketplace booking volume.
 ✅ **Quick Filters** - Filter bookings by status
 ✅ **Action Buttons** - Edit and manage bookings
 ✅ **Real-time Updates** - Activity feed

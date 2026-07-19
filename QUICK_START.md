@@ -181,6 +181,14 @@ Main endpoints used:
 - `GET /api/website/webpages` - Dynamic pages
 - `POST /api/booking` - Create booking (when integrated)
 
+Marketplace endpoints (new):
+- `POST /api/v1/auth/register` — register as `customer` or `technician`
+- `POST /api/v1/auth/login` — returns JWT
+- `GET /api/v1/technicians` — list technicians (filters supported)
+- `GET /api/v1/technicians/:id` — technician profile
+- `POST /api/v1/bookings` — book a specific technician (requires auth)
+- `PATCH /api/v1/bookings/:id/status` — update booking status (technician/admin)
+
 ## ⚡ Performance Tips
 
 - Images load from Unsplash CDN (fast)

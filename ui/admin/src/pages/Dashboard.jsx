@@ -42,8 +42,8 @@ const Dashboard = () => {
               {/* Stats Grid */}
               <div className="grid md:grid-cols-4 gap-6">
                 <StatsCard icon="📋" label="Total Bookings" value="247" trend="12%" />
-                <StatsCard icon="✅" label="Completed" value="189" trend="8%" />
-                <StatsCard icon="⏳" label="In Progress" value="34" trend="5%" />
+                <StatsCard icon="🔧" label="Technicians" value="42" trend="3%" />
+                <StatsCard icon="🕒" label="Pending Verifications" value="5" trend="-2%" />
                 <StatsCard icon="💰" label="Revenue" value="$12,450" trend="15%" />
               </div>
 
