@@ -9,6 +9,9 @@ import aboutUsRouter from './routes/aboutUsRoutes.js';
 import settingsRouter from './routes/settingsRoutes.js';
 import bookingRouter from './routes/bookingRoutes.js';
 import repairerRouter from './routes/repairerRoutes.js';
+import authRouter from './routes/authRoutes.js';
+import technicianRouter from './routes/technicianRoutes.js';
+import marketplaceBookingRouter from './routes/marketplaceBookingRoutes.js';
 
 const app = express();
 
@@ -35,6 +38,9 @@ app.use(PREFIX, webpageRouter);
 app.use(PREFIX, contactUsRouter);
 app.use(PREFIX, bookingRouter);
 app.use(PREFIX, repairerRouter);
+app.use(PREFIX, authRouter);
+app.use(PREFIX, technicianRouter);
+app.use(PREFIX, marketplaceBookingRouter);
 app.use(PREFIX, aboutUsRouter);
 app.use(PREFIX, settingsRouter);
 
