@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { repairCategories, repairPriorities } from '../resources/designSystem';
 
-const BookingForm = ({ onSubmit, onCancel }) => {
+const BookingForm = ({ onSubmit, onCancel, technicianId }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     deviceType: '',
@@ -40,7 +40,9 @@ const BookingForm = ({ onSubmit, onCancel }) => {
 
   const handleSubmit = () => {
     if (onSubmit) {
-      onSubmit(formData);
+      const payload = { ...formData };
+      if (technicianId) payload.technicianId = technicianId;
+      onSubmit(payload);
     }
   };
 

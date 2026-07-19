@@ -4,6 +4,9 @@ import Repairer from '../models/repairerModel.js';
 import Webpage from '../models/webpageModel.js';
 import AboutUs from '../models/aboutUsModel.js';
 import ContactUs from '../models/contactUsModel.js';
+import User from '../models/userModel.js';
+import TechnicianProfile from '../models/technicianProfileModel.js';
+import Booking from '../models/bookingsModel.js';
 
 const seedDatabase = async () => {
     try {
@@ -207,4 +210,73 @@ const seedDatabase = async () => {
     }
 };
 
-seedDatabase();
+const seedMarketplace = async () => {
+    try {
+        // Create example users
+        const users = [
+            { name: 'Alice Customer', email: 'alice@example.com', password: 'password123', role: 'customer', phone: '+15550001111' },
+            { name: 'Tom Technician', email: 'tom.tech@example.com', password: 'password123', role: 'technician', phone: '+15550002222' },
+            { name: 'Mary Technician', email: 'mary.tech@example.com', password: 'password123', role: 'technician', phone: '+15550003333' },
+            { name: 'Admin User', email: 'admin@example.com', password: 'adminpass', role: 'admin', phone: '+15550004444' }
+        ];
+        const createdUsers = [];
+        for (const u of users) {
+            const existing = await User.findOne({ email: u.email });
+            if (!existing) createdUsers.push(await User.create(u));
+            else createdUsers.push(existing);
+        }
+
+        // Create technician profiles
+        const techProfiles = [
+            {
+                userId: createdUsers.find(u => u.email === 'tom.tech@example.com')._id,
+                bio: 'Expert mobile and laptop repairs',
+                deviceCategories: ['mobile','computer'],
+                servicesOffered: [
+                    { name: 'iPhone Screen Replacement', category: 'mobile', description: 'Screen repair', price: 120, estimatedDuration: '1h' },
+                    { name: 'Laptop Battery Replacement', category: 'computer', description: 'Replace laptop battery', price: 80, estimatedDuration: '1.5h' }
+                ],
+                yearsExperience: 6,
+                availability: [ { day: 'Mon', from: '09:00', to: '17:00' }, { day: 'Wed', from: '10:00', to: '16:00' } ],
+                rating: 4.8,
+                reviewCount: 34,
+                verificationStatus: 'verified',
+                profileImage: ''
+            },
+            {
+                userId: createdUsers.find(u => u.email === 'mary.tech@example.com')._id,
+                bio: 'Appliance specialist',
+                deviceCategories: ['appliance','electronics'],
+                servicesOffered: [
+                    { name: 'Washing Machine Repair', category: 'appliance', description: 'Diagnose and repair', price: 150, estimatedDuration: '2h' }
+                ],
+                yearsExperience: 8,
+                availability: [ { day: 'Tue', from: '08:00', to: '12:00' }, { day: 'Thu', from: '12:00', to: '18:00' } ],
+                rating: 4.7,
+                reviewCount: 21,
+                verificationStatus: 'pending',
+                profileImage: ''
+            }
+        ];
+
+        for (const p of techProfiles) {
+            const exists = await TechnicianProfile.findOne({ userId: p.userId });
+            if (!exists) await TechnicianProfile.create(p);
+        }
+
+        // Sample booking
+        const alice = createdUsers.find(u => u.email === 'alice@example.com');
+        const tomProfile = await TechnicianProfile.findOne({ userId: createdUsers.find(u => u.email === 'tom.tech@example.com')._id });
+        const existingBooking = await Booking.findOne({ customerId: alice._id });
+        if (!existingBooking) {
+            await Booking.create({ customerId: alice._id, technicianId: tomProfile._id, deviceCategory: 'mobile', serviceRequested: 'iPhone Screen Replacement', issueDescription: 'Shattered screen', scheduledDate: '2026-08-01', scheduledTime: '10:00', price: 120, status: 'pending' });
+        }
+
+        console.log('✅ Marketplace sample users, technicians, and bookings seeded');
+
+    } catch (err) {
+        console.error('❌ Marketplace seeding failed:', err.message);
+    }
+}
+
+seedDatabase().then(() => seedMarketplace());
