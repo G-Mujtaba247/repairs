@@ -23,7 +23,7 @@ const technicianProfileSchema = new mongoose.Schema({
   availability: { type: [availabilitySlotSchema], default: [] },
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewCount: { type: Number, default: 0 },
-  verificationStatus: { type: String, enum: ['pending','verified'], default: 'pending' },
+  verificationStatus: { type: String, enum: ['pending', 'verified', 'suspended'], default: 'pending' },
   profileImage: { type: String }
 }, { timestamps: true });
 

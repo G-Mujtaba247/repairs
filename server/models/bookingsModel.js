@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const bookingStatus = {
     pending: "pending",
-    confirmed: "confirmed",
-    dispatched: "dispatched",
-    processing: "processing",
+    accepted: "accepted",
+    rejected: "rejected",
+    in_progress: "in_progress",
     completed: "completed",
     cancelled: "cancelled"
 };
@@ -19,6 +19,8 @@ const bookingSchema = new mongoose.Schema({
     scheduledTime: { type: String, required: true },
     status: { type: String, enum: Object.values(bookingStatus), default: bookingStatus.pending },
     price: { type: Number, required: false },
+    rating: { type: Number, min: 0, max: 5 }, // customer rating of technician after completion
+    reviewText: { type: String },
 }, { timestamps: true });
 
 const Booking = mongoose.model("Booking", bookingSchema);
