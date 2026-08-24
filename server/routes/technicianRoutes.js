@@ -14,8 +14,8 @@ router.post('/technicians', requireAuth, requireRole(['technician']), createProf
 router.put('/technicians/:id', requireAuth, requireRole(['technician']), createOrUpdateProfile);
 
 // Admin routes (protected)
+router.get('/technicians/stats', requireAuth, requireRole(['admin']), technicianStats);
 router.patch('/technicians/:id/verify', requireAuth, requireRole(['admin']), verifyTechnician);
 router.patch('/technicians/:id/suspend', requireAuth, requireRole(['admin']), suspendTechnician);
-router.get('/technicians/stats', requireAuth, requireRole(['admin']), technicianStats);
 
 export default router;
