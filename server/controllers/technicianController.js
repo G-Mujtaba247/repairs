@@ -38,7 +38,11 @@ export const createProfile = async (req, res) => {
 export const createOrUpdateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const data = req.body;
+    const allowedFields = ['bio', 'yearsExperience', 'deviceCategories', 'servicesOffered', 'availability', 'profileImage'];
+    const data = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowedFields.includes(key)));
+    if (!Array.isArray(data.deviceCategories) || !data.deviceCategories.length || !Array.isArray(data.servicesOffered) || !data.servicesOffered.length || !Array.isArray(data.availability) || !data.availability.length) {
+      return res.status(400).json({ status: false, message: 'Categories, services, and availability are required' });
+    }
     let profile = await TechnicianProfile.findOne({ userId });
     
     if (profile) {
@@ -72,8 +76,8 @@ export const getTechnician = async (req, res) => {
 
 export const listTechnicians = async (req, res) => {
   try {
-    const { category, rating, verified } = req.query;
-    const filter = {};
+    const { category, rating, verified = 'true', query, availability } = req.query;
+    const filter = { verificationStatus: verified === 'pending' ? 'pending' : verified === 'false' ? { $ne: 'verified' } : 'verified' };
     
     if (category) {
       filter.deviceCategories = category;
@@ -81,10 +85,15 @@ export const listTechnicians = async (req, res) => {
     if (rating) {
       filter.rating = { $gte: Number(rating) };
     }
-    if (verified === 'true') {
-      filter.verificationStatus = 'verified';
-    } else if (verified === 'pending') {
-      filter.verificationStatus = 'pending';
+    if (query?.trim()) {
+      filter.$or = [
+        { bio: { $regex: query.trim(), $options: 'i' } },
+        { deviceCategories: { $regex: query.trim(), $options: 'i' } },
+        { 'servicesOffered.name': { $regex: query.trim(), $options: 'i' } }
+      ];
+    }
+    if (availability) {
+      filter['availability.day'] = { $regex: availability, $options: 'i' };
     }
 
     const list = await TechnicianProfile.find(filter)
@@ -148,6 +157,15 @@ export const verifyTechnician = async (req, res) => {
     console.error(err);
     return res.status(500).json({ status: false, message: 'Server error' });
   }
+}
+
+export const technicianStats = async (req, res) => {
+  const [technicians, pendingVerifications, bookings] = await Promise.all([
+    User.countDocuments({ role: 'technician' }),
+    TechnicianProfile.countDocuments({ verificationStatus: 'pending' }),
+    (await import('../models/bookingsModel.js')).default.countDocuments({})
+  ]);
+  return res.json({ status: true, stats: { technicians, pendingVerifications, marketplaceBookings: bookings } });
 }
 
 export const suspendTechnician = async (req, res) => {

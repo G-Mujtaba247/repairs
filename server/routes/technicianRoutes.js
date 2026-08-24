@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProfile, createOrUpdateProfile, getTechnician, listTechnicians, searchTechnicians, verifyTechnician, suspendTechnician } from '../controllers/technicianController.js';
+import { createProfile, createOrUpdateProfile, getTechnician, listTechnicians, searchTechnicians, verifyTechnician, suspendTechnician, technicianStats } from '../controllers/technicianController.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -16,5 +16,6 @@ router.put('/technicians/:id', requireAuth, requireRole(['technician']), createO
 // Admin routes (protected)
 router.patch('/technicians/:id/verify', requireAuth, requireRole(['admin']), verifyTechnician);
 router.patch('/technicians/:id/suspend', requireAuth, requireRole(['admin']), suspendTechnician);
+router.get('/technicians/stats', requireAuth, requireRole(['admin']), technicianStats);
 
 export default router;
