@@ -329,13 +329,11 @@ const TechnicianProfile = () => {
                       key={idx}
                       style={{
                         padding: spacing.lg,
-                        backgroundColor: colors.neutral[50],
-                        borderRadius: '0.5rem',
-                        border: `1px solid ${colors.border}`,
-                        cursor: 'pointer',
-                        transition: '200ms',
                         backgroundColor: selectedService === service ? colors.primary[50] : colors.neutral[50],
-                        borderColor: selectedService === service ? colors.primary[500] : colors.border
+                        borderRadius: '0.5rem',
+                        border: `1px solid ${selectedService === service ? colors.primary[500] : colors.border}`,
+                        cursor: 'pointer',
+                        transition: '200ms'
                       }}
                       onClick={() => handleServiceSelect(service)}
                     >
