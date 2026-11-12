@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const PREFIX = "/api/v1";
-const BASE_URL = import.meta.env.SERVER_BASE_PATH || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_PATH || 'http://localhost:5000';
 const API_BASE = BASE_URL + PREFIX;
 
 // Create axios instance with default config

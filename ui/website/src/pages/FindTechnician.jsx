@@ -1,499 +1,389 @@
-import React, { useEffect, useState } from 'react';
-import { colors, spacing, typography } from '../resources/designSystem';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Search, SlidersHorizontal, Star, Wrench, RotateCcw,
+  ChevronRight, Loader2, AlertCircle, X
+} from 'lucide-react';
+import WebLayout from '../layouts/WebLayout';
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const DEVICE_CATEGORIES = [
+  'Mobile Phones', 'Laptops & PCs', 'Tablets',
+  'Home Appliances', 'Electronics', 'Mechanical',
+];
+
+const RATING_OPTIONS = [
+  { value: 0,   label: 'All ratings' },
+  { value: 4.5, label: '4.5+ ★' },
+  { value: 4,   label: '4+ ★' },
+  { value: 3.5, label: '3.5+ ★' },
+];
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+const StarRating = ({ rating, size = 14 }) => (
+  <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
+    {[1, 2, 3, 4, 5].map(i => (
+      <Star
+        key={i}
+        size={size}
+        className={i <= Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-slate-600'}
+      />
+    ))}
+  </div>
+);
+
+const TechnicianSkeleton = () => (
+  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden animate-pulse">
+    <div className="h-48 bg-slate-200 dark:bg-slate-700" />
+    <div className="p-5 space-y-3">
+      <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-2/3" />
+      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+      <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded mt-4" />
+    </div>
+  </div>
+);
+
+const TechnicianCard = ({ technician, onViewProfile }) => {
+  const minPrice = technician.servicesOffered?.length
+    ? Math.min(...technician.servicesOffered.map(s => s.price))
+    : null;
+
+  return (
+    <article className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+      {/* Profile image */}
+      <div className="relative h-48 bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center overflow-hidden">
+        {technician.profileImage ? (
+          <img
+            src={technician.profileImage}
+            alt={`${technician.userId?.name ?? 'Technician'} profile`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <Wrench className="text-sky-300 dark:text-sky-700" size={48} />
+        )}
+        {technician.verificationStatus === 'verified' && (
+          <span className="absolute top-3 right-3 bg-emerald-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+            ✓ Verified
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-5 space-y-3">
+        <div>
+          <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight">
+            {technician.userId?.name ?? 'Technician'}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {technician.yearsExperience} years experience
+          </p>
+        </div>
+
+        {/* Rating */}
+        <div className="flex items-center gap-2">
+          <StarRating rating={technician.rating} />
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {technician.rating?.toFixed(1)} ({technician.reviewCount} reviews)
+          </span>
+        </div>
+
+        {/* Bio */}
+        {technician.bio && (
+          <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+            {technician.bio}
+          </p>
+        )}
+
+        {/* Category tags */}
+        <div className="flex flex-wrap gap-1.5">
+          {technician.deviceCategories?.slice(0, 3).map(cat => (
+            <span
+              key={cat}
+              className="px-2 py-0.5 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-400 text-xs font-medium rounded-full border border-sky-100 dark:border-sky-900"
+            >
+              {cat}
+            </span>
+          ))}
+          {technician.deviceCategories?.length > 3 && (
+            <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-xs rounded-full">
+              +{technician.deviceCategories.length - 3}
+            </span>
+          )}
+        </div>
+
+        {/* Price */}
+        {minPrice !== null && (
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            From <span className="text-sky-600 dark:text-sky-400">${minPrice}</span>
+          </p>
+        )}
+
+        <button
+          onClick={() => onViewProfile(technician._id)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg transition-colors text-sm mt-2"
+          aria-label={`View ${technician.userId?.name ?? 'technician'}'s profile`}
+        >
+          View Profile
+          <ChevronRight size={15} />
+        </button>
+      </div>
+    </article>
+  );
+};
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 const FindTechnician = () => {
   const navigate = useNavigate();
-  const [technicians, setTechnicians] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const [filters, setFilters] = useState({
-    category: '',
-    minRating: 0,
-    searchQuery: '',
-    maxPrice: ''
-  });
 
+  const [technicians, setTechnicians] = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const deviceCategories = [
-    'Mobile Phones',
-    'Laptops & PCs',
-    'Tablets',
-    'Home Appliances',
-    'Electronics',
-    'Mechanical'
-  ];
+  const [filters, setFilters] = useState({
+    category:    '',
+    minRating:   0,
+    searchQuery: '',
+    maxPrice:    '',
+  });
 
-  const ratings = [
-    { value: 0, label: 'All ratings' },
-    { value: 4.5, label: '4.5+ stars' },
-    { value: 4, label: '4+ stars' },
-    { value: 3.5, label: '3.5+ stars' },
-  ];
-
-  useEffect(() => {
-    fetchTechnicians();
-  }, []);
-
-  const fetchTechnicians = async (searchFilters = filters) => {
+  const fetchTechnicians = useCallback(async (activeFilters = filters) => {
     setLoading(true);
     setError('');
-    
+
     try {
-      let url = '/api/v1/technicians?verified=true';
+      const params = new URLSearchParams({ verified: 'true' });
+      if (activeFilters.category)    params.set('category',  activeFilters.category);
+      if (activeFilters.minRating > 0) params.set('rating',  String(activeFilters.minRating));
+      if (activeFilters.searchQuery) params.set('query',     activeFilters.searchQuery);
+      if (activeFilters.maxPrice)    params.set('maxPrice',  activeFilters.maxPrice);
 
-      if (searchFilters.category) {
-        url += `&category=${encodeURIComponent(searchFilters.category)}`;
-      }
-
-      if (searchFilters.minRating > 0) {
-        url += `&rating=${searchFilters.minRating}`;
-      }
-
-      if (searchFilters.searchQuery) {
-        url += `&query=${encodeURIComponent(searchFilters.searchQuery)}`;
-      }
-
-      if (searchFilters.maxPrice) {
-        url += `&maxPrice=${searchFilters.maxPrice}`;
-      }
-
-      const response = await fetch(url);
-      const data = await response.json();
+      const res  = await fetch(`/api/v1/technicians?${params}`);
+      const data = await res.json();
 
       if (data.status) {
-        setTechnicians(data.technicians || []);
+        setTechnicians(data.technicians ?? []);
       } else {
-        setError(data.message || 'Failed to load technicians');
+        setError(data.message ?? 'Failed to load technicians');
       }
-    } catch (err) {
-      console.error(err);
-      setError('An error occurred while loading technicians');
+    } catch {
+      setError('Network error — please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-  };
+  useEffect(() => {
+    fetchTechnicians();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFilterChange = (key, value) =>
+    setFilters(prev => ({ ...prev, [key]: value }));
 
   const handleSearch = (e) => {
     e.preventDefault();
     fetchTechnicians(filters);
   };
 
-  const handleResetFilters = () => {
-    const resetFilters = { category: '', minRating: 0, searchQuery: '', maxPrice: '' };
-    setFilters(resetFilters);
-    fetchTechnicians(resetFilters);
+  const handleReset = () => {
+    const reset = { category: '', minRating: 0, searchQuery: '', maxPrice: '' };
+    setFilters(reset);
+    fetchTechnicians(reset);
   };
 
-  const handleViewProfile = (technicianId) => {
-    navigate(`/technician-profile/${technicianId}`);
-  };
+  const hasActiveFilters = filters.category || filters.minRating > 0 || filters.searchQuery || filters.maxPrice;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: colors.background, paddingBottom: spacing.xl }}>
-      {/* Hero Section */}
-      <div style={{ backgroundColor: colors.primary[500], color: 'white', padding: `${spacing.xl} ${spacing.lg}` }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h1 style={{ fontSize: typography.fontSize['3xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing.md }}>
+    <WebLayout>
+      {/* Page hero */}
+      <section className="bg-gradient-to-r from-sky-600 to-sky-500 text-white py-14 px-4 -mx-4">
+        <div className="max-w-4xl mx-auto text-center space-y-3">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
             Find Expert Technicians
           </h1>
-          <p style={{ fontSize: typography.fontSize.lg, opacity: 0.9 }}>
-            Connect with verified professionals for all your repair needs
+          <p className="text-sky-100 text-lg max-w-xl mx-auto">
+            Connect with verified professionals for all your repair needs.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: spacing.xl }}>
-        {/* Search & Filters Section */}
-        <div style={{ marginBottom: spacing.xl }}>
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} style={{ marginBottom: spacing.lg }}>
-            <div style={{ display: 'flex', gap: spacing.md, marginBottom: spacing.md }}>
-              <input
-                type="text"
-                placeholder="Search technicians by name, service, or skill..."
-                value={filters.searchQuery}
-                onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: spacing.md,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '0.5rem',
-                  fontSize: typography.fontSize.base
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: colors.primary[500],
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontWeight: typography.fontWeight.semibold,
-                  cursor: 'pointer',
-                  transition: '200ms'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = colors.primary[600]}
-                onMouseOut={(e) => e.target.style.backgroundColor = colors.primary[500]}
-              >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFilters(!showFilters)}
-                style={{
-                  padding: `${spacing.md} ${spacing.lg}`,
-                  backgroundColor: colors.neutral[200],
-                  color: colors.text.primary,
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontWeight: typography.fontWeight.semibold,
-                  cursor: 'pointer',
-                  transition: '200ms'
-                }}
-              >
-                {showFilters ? 'Hide Filters' : 'Filters'}
-              </button>
-            </div>
+      <div id="main-content" className="max-w-7xl mx-auto py-10 space-y-6">
 
-            {/* Filters Panel */}
-            {showFilters && (
-              <div
-                style={{
-                  padding: spacing.lg,
-                  backgroundColor: colors.neutral[50],
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${colors.border}`,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: spacing.md
-                }}
-              >
-                {/* Category Filter */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: typography.fontWeight.medium, marginBottom: spacing.sm }}>
-                    Device Category
-                  </label>
-                  <select
-                    value={filters.category}
-                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: spacing.md,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '0.5rem',
-                      fontSize: typography.fontSize.base
-                    }}
-                  >
-                    <option value="">All Categories</option>
-                    {deviceCategories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Rating Filter */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: typography.fontWeight.medium, marginBottom: spacing.sm }}>
-                    Minimum Rating
-                  </label>
-                  <select
-                    value={filters.minRating}
-                    onChange={(e) => handleFilterChange('minRating', parseFloat(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: spacing.md,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '0.5rem',
-                      fontSize: typography.fontSize.base
-                    }}
-                  >
-                    {ratings.map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Price Filter */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: typography.fontWeight.medium, marginBottom: spacing.sm }}>
-                    Max Price per Service
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g., 100"
-                    value={filters.maxPrice}
-                    onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: spacing.md,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '0.5rem',
-                      fontSize: typography.fontSize.base
-                    }}
-                  />
-                </div>
-
-                {/* Reset Button */}
-                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    style={{
-                      width: '100%',
-                      padding: spacing.md,
-                      backgroundColor: colors.neutral[300],
-                      color: colors.text.primary,
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      fontWeight: typography.fontWeight.medium,
-                      cursor: 'pointer',
-                      transition: '200ms'
-                    }}
-                  >
-                    Reset Filters
-                  </button>
-                </div>
-              </div>
-            )}
-          </form>
-
-          {/* Results Info */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
-            <p style={{ color: colors.text.secondary, fontSize: typography.fontSize.base }}>
-              Found {loading ? '...' : technicians.length} technician{technicians.length !== 1 ? 's' : ''}
-            </p>
+        {/* Search bar */}
+        <form onSubmit={handleSearch} className="flex gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by name, skill, or service…"
+              value={filters.searchQuery}
+              onChange={e => handleFilterChange('searchQuery', e.target.value)}
+              className="w-full pl-9 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              aria-label="Search technicians"
+            />
           </div>
+          <button
+            type="submit"
+            className="px-5 py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg transition-colors text-sm"
+          >
+            Search
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFilters(v => !v)}
+            aria-expanded={showFilters}
+            className={`flex items-center gap-2 px-4 py-3 rounded-lg border font-medium text-sm transition-colors ${
+              showFilters || hasActiveFilters
+                ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400'
+                : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-sky-400'
+            }`}
+          >
+            <SlidersHorizontal size={15} />
+            Filters
+            {hasActiveFilters && (
+              <span className="bg-sky-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">!</span>
+            )}
+          </button>
+        </form>
+
+        {/* Filter panel */}
+        {showFilters && (
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Device category
+                </label>
+                <select
+                  value={filters.category}
+                  onChange={e => handleFilterChange('category', e.target.value)}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  <option value="">All categories</option>
+                  {DEVICE_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Min rating */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Minimum rating
+                </label>
+                <select
+                  value={filters.minRating}
+                  onChange={e => handleFilterChange('minRating', parseFloat(e.target.value))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                  {RATING_OPTIONS.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Max price */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Max price per service ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 100"
+                  value={filters.maxPrice}
+                  onChange={e => handleFilterChange('maxPrice', e.target.value)}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+
+              {/* Reset */}
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <RotateCcw size={14} />
+                  Reset filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Result info bar */}
+        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+          <span>
+            {loading ? 'Searching…' : `${technicians.length} technician${technicians.length !== 1 ? 's' : ''} found`}
+          </span>
+          {hasActiveFilters && !loading && (
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1 text-sky-600 hover:underline"
+            >
+              <X size={12} /> Clear filters
+            </button>
+          )}
         </div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <div
-            style={{
-              padding: spacing.md,
-              marginBottom: spacing.lg,
-              backgroundColor: '#fee2e2',
-              border: `1px solid ${colors.error}`,
-              borderRadius: '0.5rem',
-              color: colors.error,
-              fontSize: typography.fontSize.sm
-            }}
-          >
-            {error}
+          <div className="flex items-start gap-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl p-4 text-sm" role="alert">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Skeleton grid */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: spacing.xl }}>
-            <p style={{ color: colors.text.secondary }}>Loading technicians...</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {[1,2,3,4].map(i => <TechnicianSkeleton key={i} />)}
           </div>
         )}
 
-        {/* Technician Grid */}
+        {/* Technician grid */}
         {!loading && technicians.length > 0 && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: spacing.lg
-            }}
-          >
-            {technicians.map((technician) => (
-              <div
-                key={technician._id}
-                style={{
-                  backgroundColor: colors.card,
-                  borderRadius: '0.75rem',
-                  border: `1px solid ${colors.border}`,
-                  overflow: 'hidden',
-                  transition: '200ms',
-                  boxShadow: colors.shadows.sm
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.boxShadow = colors.shadows.lg;
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.boxShadow = colors.shadows.sm;
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                {/* Profile Image */}
-                <div
-                  style={{
-                    height: '200px',
-                    backgroundColor: colors.primary[50],
-                    backgroundImage: technician.profileImage ? `url(${technician.profileImage})` : undefined,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '48px',
-                    color: colors.primary[300]
-                  }}
-                >
-                  {!technician.profileImage && '👨‍🔧'}
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: spacing.lg }}>
-                  <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.bold, marginBottom: spacing.sm }}>
-                    {technician.userId?.name || 'Technician'}
-                  </h3>
-
-                  {/* Rating */}
-                  <div style={{ marginBottom: spacing.md, display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            color: i < Math.floor(technician.rating) ? colors.warning : colors.neutral[300],
-                            fontSize: '16px'
-                          }}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <span style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>
-                      {technician.rating.toFixed(1)} ({technician.reviewCount} reviews)
-                    </span>
-                  </div>
-
-                  {/* Bio */}
-                  <p
-                    style={{
-                      fontSize: typography.fontSize.sm,
-                      color: colors.text.secondary,
-                      marginBottom: spacing.md,
-                      minHeight: '40px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}
-                  >
-                    {technician.bio}
-                  </p>
-
-                  {/* Experience */}
-                  <p
-                    style={{
-                      fontSize: typography.fontSize.sm,
-                      color: colors.text.secondary,
-                      marginBottom: spacing.md
-                    }}
-                  >
-                    <strong>{technician.yearsExperience}</strong> years experience
-                  </p>
-
-                  {/* Categories */}
-                  <div style={{ marginBottom: spacing.md }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.sm }}>
-                      {technician.deviceCategories.slice(0, 3).map((cat) => (
-                        <span
-                          key={cat}
-                          style={{
-                            padding: `${spacing.xs} ${spacing.sm}`,
-                            backgroundColor: colors.primary[50],
-                            color: colors.primary[700],
-                            borderRadius: '9999px',
-                            fontSize: typography.fontSize.xs,
-                            fontWeight: typography.fontWeight.medium
-                          }}
-                        >
-                          {cat}
-                        </span>
-                      ))}
-                      {technician.deviceCategories.length > 3 && (
-                        <span
-                          style={{
-                            padding: `${spacing.xs} ${spacing.sm}`,
-                            backgroundColor: colors.neutral[200],
-                            color: colors.text.secondary,
-                            borderRadius: '9999px',
-                            fontSize: typography.fontSize.xs
-                          }}
-                        >
-                          +{technician.deviceCategories.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Price Range */}
-                  {technician.servicesOffered.length > 0 && (
-                    <p style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary, marginBottom: spacing.md }}>
-                      💰 From ${Math.min(...technician.servicesOffered.map(s => s.price))}
-                    </p>
-                  )}
-
-                  {/* View Profile Button */}
-                  <button
-                    onClick={() => handleViewProfile(technician._id)}
-                    style={{
-                      width: '100%',
-                      padding: spacing.md,
-                      backgroundColor: colors.primary[500],
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      fontWeight: typography.fontWeight.semibold,
-                      cursor: 'pointer',
-                      transition: '200ms'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = colors.primary[600]}
-                    onMouseOut={(e) => e.target.style.backgroundColor = colors.primary[500]}
-                  >
-                    View Profile
-                  </button>
-                </div>
-              </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {technicians.map(tech => (
+              <TechnicianCard
+                key={tech._id}
+                technician={tech}
+                onViewProfile={id => navigate(`/technician-profile/${id}`)}
+              />
             ))}
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty state */}
         {!loading && technicians.length === 0 && !error && (
-          <div style={{ textAlign: 'center', padding: `${spacing.xl} ${spacing.lg}` }}>
-            <div style={{ fontSize: '48px', marginBottom: spacing.md }}>🔍</div>
-            <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, marginBottom: spacing.sm }}>
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 mb-6">
+              <Search className="text-slate-400" size={32} />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
               No technicians found
             </h3>
-            <p style={{ color: colors.text.secondary, marginBottom: spacing.lg }}>
-              Try adjusting your filters or search criteria
+            <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+              Try adjusting your filters or search term to find the right technician.
             </p>
             <button
-              onClick={handleResetFilters}
-              style={{
-                padding: `${spacing.md} ${spacing.lg}`,
-                backgroundColor: colors.primary[500],
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                fontWeight: typography.fontWeight.semibold,
-                cursor: 'pointer',
-                transition: '200ms'
-              }}
+              onClick={handleReset}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg transition-colors"
             >
-              Clear All Filters
+              <RotateCcw size={15} />
+              Clear all filters
             </button>
           </div>
         )}
+
       </div>
-    </div>
+    </WebLayout>
   );
 };
 
