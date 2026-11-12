@@ -1,6 +1,7 @@
 import Booking from "../models/bookingsModel.js";
 import TechnicianProfile from '../models/technicianProfileModel.js';
 import { sendEmail } from "../utils/sendEmail.js";
+import validator from 'validator';
 
 export const createBooking = async (req, res) => {
     const booking = req.body;
@@ -20,8 +21,33 @@ export const createBooking = async (req, res) => {
             status: "pending",
         });
 
-        const contentEmail = `Hi ${booking.firstName}, thank you for your repair request. We will contact you shortly.\n\nRequested service: ${booking.category}\nPreferred date: ${booking.repairDate || 'To be arranged'}\nRegards,\nRepairs Experts`;
-        sendEmail(booking.email, "Your repair request was received", contentEmail);
+        const customerEmail = `Hi ${booking.firstName}, thank you for your repair request. We will contact you shortly.<br><br>Requested service: ${booking.category}<br>Preferred date: ${booking.repairDate || 'To be arranged'}<br>Regards,<br>Repairs Experts`;
+        const notificationEmail = process.env.BOOKING_NOTIFICATION_EMAIL?.trim();
+        if (notificationEmail && validator.isEmail(notificationEmail)) {
+            const staffEmail = [
+                '<h2>New repair request</h2>',
+                `<p><strong>Customer:</strong> ${booking.firstName} ${booking.lastName}</p>`,
+                `<p><strong>Email:</strong> ${validator.escape(booking.email)}</p>`,
+                `<p><strong>Phone:</strong> ${booking.phone}</p>`,
+                `<p><strong>Category:</strong> ${booking.category}</p>`,
+                `<p><strong>Issue:</strong> ${booking.issue || 'Not specified'}</p>`,
+                `<p><strong>Details:</strong> ${booking.message || 'Not specified'}</p>`,
+                `<p><strong>Priority:</strong> ${booking.priority || 'Not specified'}</p>`,
+                `<p><strong>Preferred time:</strong> ${booking.repairDate || 'To be arranged'} ${booking.repairTime || ''}</p>`,
+                `<p><strong>Address:</strong> ${booking.locationName || 'Not provided'}</p>`,
+            ].join('');
+            await Promise.all([
+                sendEmail(booking.email, "Your repair request was received", customerEmail),
+                sendEmail(notificationEmail, "New repair request", staffEmail),
+            ]);
+        } else {
+            if (notificationEmail) {
+                console.error('BOOKING_NOTIFICATION_EMAIL is not a valid email address; staff notification was not sent.');
+            } else {
+                console.error('BOOKING_NOTIFICATION_EMAIL is not configured; staff notification was not sent.');
+            }
+            await sendEmail(booking.email, "Your repair request was received", customerEmail);
+        }
 
         return res.status(201).send({
             status: true,
