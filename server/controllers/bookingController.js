@@ -4,23 +4,36 @@ import { sendEmail } from "../utils/sendEmail.js";
 
 export const createBooking = async (req, res) => {
     const booking = req.body;
-    console.log(booking);
     try {
-        booking.status = "pending"; // setting default status
-        const response = await Booking.create(booking);
-        if (response) {
+        const response = await Booking.create({
+            firstName: booking.firstName,
+            lastName: booking.lastName,
+            email: booking.email,
+            phone: booking.phone,
+            category: booking.category,
+            issue: booking.issue,
+            message: booking.message,
+            priority: booking.priority,
+            locationName: booking.locationName,
+            repairDate: booking.repairDate,
+            repairTime: booking.repairTime,
+            status: "pending",
+        });
 
-            const contentEmail = `Hi ${booking.firstName}, Thankyou for your appliance booking. We will contact you shortly \n Regards: REPAIRS EXPERTS`;
+        const contentEmail = `Hi ${booking.firstName}, thank you for your repair request. We will contact you shortly.\n\nRequested service: ${booking.category}\nPreferred date: ${booking.repairDate || 'To be arranged'}\nRegards,\nRepairs Experts`;
+        sendEmail(booking.email, "Your repair request was received", contentEmail);
 
-            sendEmail(booking.email, "Your booking created succesful!", contentEmail)
-
-            return res.send({status: true, message: "Thank you for your booking, we will inform you."})
-        } else {
-            return res.send({status: false, message: "Please try again later!"})
-        }
+        return res.status(201).send({
+            status: true,
+            message: "Thank you for your repair request. We will contact you soon.",
+            bookingId: response._id,
+        });
     } catch (error) {
-        console.log("Error: ", error)
-        return res.send({status: false, message: "Network error!"})        
+        console.error("Error creating repair request:", error);
+        return res.status(500).send({
+            status: false,
+            message: "Unable to submit your repair request. Please try again later.",
+        });
     }
 }
 
